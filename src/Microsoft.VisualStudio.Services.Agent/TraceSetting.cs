@@ -15,12 +15,37 @@ namespace Microsoft.VisualStudio.Services.Agent
     {
         private static UtilKnobValueContext _knobContext = UtilKnobValueContext.Instance();
 
-        public TraceSetting()
+        public TraceSetting() : this(HostType.Agent, null)
+        {
+        }
+
+        public TraceSetting(HostType hostType, IKnobValueContext knobContext = null)
         {
             DefaultTraceLevel = TraceLevel.Info;
 #if DEBUG
             DefaultTraceLevel = TraceLevel.Verbose;
 #endif            
+
+            // Use different logic based on host type
+            if (hostType == HostType.Worker && knobContext != null)
+            {
+                // Worker can use both pipeline variables and environment variables
+                try
+                {
+                    string workerTrace = AgentKnobs.WorkerTraceVerbose.GetValue(knobContext).AsString();
+                    if (!string.IsNullOrEmpty(workerTrace))
+                    {
+                        DefaultTraceLevel = TraceLevel.Verbose;
+                        return;
+                    }
+                }
+                catch (System.NotSupportedException)
+                {
+                    // Fallback to environment variable if RuntimeKnobSource is not supported
+                }
+            }
+            
+            // Fallback to listener logic or for cases where worker knob is not set
             string vstsAgentTrace = AgentKnobs.TraceVerbose.GetValue(_knobContext).AsString();
             if (!string.IsNullOrEmpty(vstsAgentTrace))
             {

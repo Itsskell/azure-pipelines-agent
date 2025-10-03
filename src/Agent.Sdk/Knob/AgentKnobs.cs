@@ -220,6 +220,13 @@ namespace Agent.Sdk.Knob
             new EnvironmentKnobSource("VSTSAGENT_TRACE"),
             new BuiltInDefaultKnobSource(string.Empty));
 
+        public static readonly Knob WorkerTraceVerbose = new Knob(
+            nameof(WorkerTraceVerbose),
+            "If set to anything, trace level will be verbose in worker process (job execution)",
+            new RuntimeKnobSource("agent.workerTraceVerbose"),
+            new EnvironmentKnobSource("AGENT_WORKER_TRACE"),
+            new BuiltInDefaultKnobSource(string.Empty));
+
         public static readonly Knob DebugTask = new Knob(
             nameof(DebugTask),
             "If the agent executes a task which ID or name matches the value provided, it will run the task so that it will wait for debugger to attach",

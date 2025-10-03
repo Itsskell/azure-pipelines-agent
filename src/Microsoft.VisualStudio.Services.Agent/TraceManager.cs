@@ -35,6 +35,11 @@ namespace Microsoft.VisualStudio.Services.Agent
         {
         }
 
+        public TraceManager(HostTraceListener traceListener, ILoggedSecretMasker secretMasker, IKnobValueContext knobValueContext, HostType hostType)
+            : this(traceListener, new TraceSetting(hostType, knobValueContext), secretMasker, knobValueContext)
+        {
+        }
+
         public TraceManager(HostTraceListener traceListener, TraceSetting traceSetting, ILoggedSecretMasker secretMasker, IKnobValueContext knobValueContext)
         {
             ArgUtil.NotNull(traceListener, nameof(traceListener));
