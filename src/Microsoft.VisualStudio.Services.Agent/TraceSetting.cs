@@ -6,51 +6,52 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.Serialization;
 using Agent.Sdk.Knob;
-using Microsoft.VisualStudio.Services.Agent.Util;
 
 namespace Microsoft.VisualStudio.Services.Agent
 {
     [DataContract]
     public class TraceSetting
     {
-        private static UtilKnobValueContext _knobContext = UtilKnobValueContext.Instance();
-
         public TraceSetting() : this(HostType.Agent, null)
         {
         }
 
         public TraceSetting(HostType hostType, IKnobValueContext knobContext = null)
         {
-            DefaultTraceLevel = TraceLevel.Info;
-#if DEBUG
-            DefaultTraceLevel = TraceLevel.Verbose;
-#endif            
+            // Write debug info to a temp file since console might be redirected
+            var debugFile = @"C:\temp\tracesetting_debug.log";
+            try 
+            {
+                System.IO.File.AppendAllText(debugFile, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] TraceSetting constructor called - HostType: {hostType}, knobContext: {(knobContext != null ? "not null" : "null")}\n");
+            } catch { }
 
-            // Use different logic based on host type
-            if (hostType == HostType.Worker && knobContext != null)
+            if (hostType == HostType.Agent)
             {
-                // Worker can use both pipeline variables and environment variables
-                try
-                {
-                    string workerTrace = AgentKnobs.WorkerTraceVerbose.GetValue(knobContext).AsString();
-                    if (!string.IsNullOrEmpty(workerTrace))
-                    {
-                        DefaultTraceLevel = TraceLevel.Verbose;
-                        return;
-                    }
-                }
-                catch (System.NotSupportedException)
-                {
-                    // Fallback to environment variable if RuntimeKnobSource is not supported
-                }
-            }
-            
-            // Fallback to listener logic or for cases where worker knob is not set
-            string vstsAgentTrace = AgentKnobs.TraceVerbose.GetValue(_knobContext).AsString();
-            if (!string.IsNullOrEmpty(vstsAgentTrace))
-            {
+                // Enable logs by default for listener
                 DefaultTraceLevel = TraceLevel.Verbose;
+                try { System.IO.File.AppendAllText(debugFile, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] Agent hostType - set to Verbose\n"); } catch { }
+                return;
             }
+
+            DefaultTraceLevel = TraceLevel.Info; // Default to Info for worker
+            try { System.IO.File.AppendAllText(debugFile, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] Initial DefaultTraceLevel set to Info for Worker\n"); } catch { }
+
+            if (hostType == HostType.Worker)
+            {
+                try { System.IO.File.AppendAllText(debugFile, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] Worker logging will be controlled dynamically during job execution via JobRunner\n"); } catch { }
+                // Worker verbose logging is now handled dynamically in JobRunner.cs after ExecutionContext is available
+                // This allows access to pipeline variables through the knob system
+            }
+
+#if DEBUG
+            // Only enable verbose in debug for non-worker or when explicitly requested
+            if (hostType != HostType.Worker)
+            {
+                DefaultTraceLevel = TraceLevel.Verbose; // Enable Verbose in Debug builds for non-worker
+            }
+#endif
+
+            // Worker logging is now controlled by the WorkerLogs knob only
         }
 
         [DataMember(EmitDefaultValue = false)]
@@ -64,16 +65,16 @@ namespace Microsoft.VisualStudio.Services.Agent
         {
             get
             {
-                if (m_detailTraceSetting == null)
+                if (_detailTraceSetting == null)
                 {
-                    m_detailTraceSetting = new Dictionary<String, TraceLevel>(StringComparer.OrdinalIgnoreCase);
+                    _detailTraceSetting = new Dictionary<String, TraceLevel>(StringComparer.OrdinalIgnoreCase);
                 }
-                return m_detailTraceSetting;
+                return _detailTraceSetting;
             }
         }
 
         [DataMember(EmitDefaultValue = false, Name = "DetailTraceSetting")]
-        private Dictionary<String, TraceLevel> m_detailTraceSetting;
+        private Dictionary<String, TraceLevel> _detailTraceSetting;
     }
 
     [DataContract]

@@ -113,6 +113,18 @@ namespace Microsoft.VisualStudio.Services.Agent.Worker
                     jobContext = HostContext.CreateService<IExecutionContext>();
                     jobContext.InitializeJob(message, jobRequestCancellationToken);
 
+                    // Check if worker verbose logging should be enabled after ExecutionContext is available
+                    if (AgentKnobs.WorkerLogs.GetValue(jobContext).AsBoolean())
+                    {
+                        Trace.Info("Worker verbose logging enabled via pipeline variable VSTSAGENT_WORKER_LOGS");
+                        // Enable verbose logging for the current trace manager
+                        var traceManager = HostContext.GetService<ITraceManager>();
+                        if (traceManager?.Switch != null)
+                        {
+                            traceManager.Switch.Level = System.Diagnostics.SourceLevels.Verbose;
+                        }
+                    }
+
                     jobContext.Start();
                     jobContext.Section(StringUtil.Loc("StepStarting", message.JobDisplayName));
                     Trace.Info($"ExecutionContext initialized successfully. [JobName: {message.JobDisplayName}]");

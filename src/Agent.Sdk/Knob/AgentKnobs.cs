@@ -220,6 +220,22 @@ namespace Agent.Sdk.Knob
             new EnvironmentKnobSource("VSTSAGENT_TRACE"),
             new BuiltInDefaultKnobSource(string.Empty));
 
+        public static readonly Knob WorkerLogs = new Knob(
+            nameof(WorkerLogs),
+            "Enable verbose logging for worker processes.",
+            new RuntimeKnobSource("VSTSAGENT_WORKER_LOGS"),
+            new EnvironmentKnobSource("VSTSAGENT_WORKER_LOGS"),
+            new BuiltInDefaultKnobSource("false")
+        );
+
+        public static readonly Knob DiagnosticLogs = new Knob(
+            nameof(DiagnosticLogs),
+            "Enable comprehensive diagnostic logging including verbose logs and HTTP tracing for worker processes.",
+            new RuntimeKnobSource("VSTSAGENT_DIAGNOSTIC_LOGS"),
+            new EnvironmentKnobSource("VSTSAGENT_DIAGNOSTIC_LOGS"),
+            new BuiltInDefaultKnobSource("false")
+        );
+
         public static readonly Knob WorkerTraceVerbose = new Knob(
             nameof(WorkerTraceVerbose),
             "If set to anything, trace level will be verbose in worker process (job execution)",
@@ -330,6 +346,7 @@ namespace Agent.Sdk.Knob
         public static readonly Knob HttpTrace = new Knob(
             nameof(HttpTrace),
             "Enable http trace if true",
+            new RuntimeKnobSource("VSTS_AGENT_HTTPTRACE"),
             new EnvironmentKnobSource("VSTS_AGENT_HTTPTRACE"),
             new BuiltInDefaultKnobSource("false"));
 
