@@ -14,13 +14,30 @@ namespace Microsoft.VisualStudio.Services.Agent
     public class TraceSetting
     {
         private static UtilKnobValueContext _knobContext = UtilKnobValueContext.Instance();
-
-        public TraceSetting()
+        public TraceSetting() : this(HostType.Agent, null)
         {
-            DefaultTraceLevel = TraceLevel.Info;
+        }
+
+        public TraceSetting(HostType hostType, IKnobValueContext knobContext = null)
+        {
+            if (hostType == HostType.Agent)
+            {
+                // Enable logs by default for listener
+                DefaultTraceLevel = TraceLevel.Verbose;
+                return;
+            }
+
+            DefaultTraceLevel = TraceLevel.Info; // Default to Info for worker
+
+            //if (hostType == HostType.Worker)
+            //{
+            // Worker verbose logging is now handled dynamically in JobRunner.cs after ExecutionContext is available
+            // This allows access to pipeline variables through the knob system
+            //}
+
 #if DEBUG
             DefaultTraceLevel = TraceLevel.Verbose;
-#endif            
+#endif
             string vstsAgentTrace = AgentKnobs.TraceVerbose.GetValue(_knobContext).AsString();
             if (!string.IsNullOrEmpty(vstsAgentTrace))
             {
